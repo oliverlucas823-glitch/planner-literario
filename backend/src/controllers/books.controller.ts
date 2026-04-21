@@ -148,7 +148,10 @@ export async function create(req: Request, res: Response, next: NextFunction): P
       }
     }
 
-    if (data.end_date && data.status !== 'lido') {
+    const start_date = data.start_date && data.start_date !== '' ? new Date(data.start_date) : null
+    const end_date = data.end_date && data.end_date !== '' ? new Date(data.end_date) : null
+
+    if (end_date && data.status !== 'lido') {
       res.status(400).json({
         error: 'Data de término só é permitida para livros com status lido',
       })
@@ -165,6 +168,8 @@ export async function create(req: Request, res: Response, next: NextFunction): P
         is_trilogy: data.is_trilogy ?? false,
         wishlist: data.wishlist ?? false,
         progress: data.progress ?? 0,
+        start_date,
+        end_date,
       },
     })
 
@@ -208,10 +213,17 @@ export async function update(req: Request, res: Response, next: NextFunction): P
 
     const data = updateBookSchema.parse(req.body)
 
-    const status = data.status ?? existing.status
-    const end_date = 'end_date' in data ? data.end_date : existing.end_date
+    const start_date = 'start_date' in data
+      ? (data.start_date && data.start_date !== '' ? new Date(data.start_date) : null)
+      : undefined
+    const end_date = 'end_date' in data
+      ? (data.end_date && data.end_date !== '' ? new Date(data.end_date) : null)
+      : undefined
 
-    if (end_date && status !== 'lido') {
+    const status = data.status ?? existing.status
+    const resolvedEndDate = end_date !== undefined ? end_date : existing.end_date
+
+    if (resolvedEndDate && status !== 'lido') {
       res.status(400).json({
         error: 'Data de término só é permitida para livros com status lido',
       })
@@ -220,7 +232,7 @@ export async function update(req: Request, res: Response, next: NextFunction): P
 
     const book = await prisma.book.update({
       where: { id },
-      data,
+      data: { ...data, start_date, end_date },
     })
 
     res.status(200).json({ book })
