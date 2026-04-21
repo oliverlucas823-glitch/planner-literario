@@ -3,8 +3,6 @@ import { z } from 'zod'
 import { stripe } from '../lib/stripe'
 import { prisma } from '../lib/prisma'
 
-// ── Schemas ───────────────────────────────────────────────────────────────────
-
 const checkoutSchema = z.object({
   price_id: z.string(),
   success_url: z.string().url(),
@@ -15,8 +13,6 @@ const portalSchema = z.object({
   return_url: z.string().url(),
 })
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
 function extractCustomerId(customer: unknown): string | null {
   if (!customer) return null
   if (typeof customer === 'string') return customer
@@ -26,10 +22,13 @@ function extractCustomerId(customer: unknown): string | null {
   return null
 }
 
-// ── Controllers ───────────────────────────────────────────────────────────────
-
 export async function createCheckout(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    if (!stripe) {
+      res.status(503).json({ error: 'Pagamentos não configurados neste ambiente' })
+      return
+    }
+
     const { price_id, success_url, cancel_url } = checkoutSchema.parse(req.body)
     const user = req.user!
 
@@ -67,7 +66,7 @@ export async function createCheckout(req: Request, res: Response, next: NextFunc
       metadata: { user_id: user.id },
     })
 
-    res.status(200).json({ checkout_url: session.url })
+    res.status(200).json({ url: session.url })
   } catch (err) {
     next(err)
   }
@@ -75,6 +74,11 @@ export async function createCheckout(req: Request, res: Response, next: NextFunc
 
 export async function createPortal(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    if (!stripe) {
+      res.status(503).json({ error: 'Pagamentos não configurados neste ambiente' })
+      return
+    }
+
     const user = req.user!
 
     if (!user.stripe_customer_id) {
@@ -89,7 +93,7 @@ export async function createPortal(req: Request, res: Response, next: NextFuncti
       return_url,
     })
 
-    res.status(200).json({ portal_url: session.url })
+    res.status(200).json({ url: session.url })
   } catch (err) {
     next(err)
   }
@@ -105,6 +109,11 @@ export async function getSubscription(req: Request, res: Response, next: NextFun
 }
 
 export async function webhook(req: Request, res: Response, next: NextFunction): Promise<void> {
+  if (!stripe) {
+    res.status(503).json({ error: 'Pagamentos não configurados neste ambiente' })
+    return
+  }
+
   const sig = req.headers['stripe-signature'] as string
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -113,7 +122,7 @@ export async function webhook(req: Request, res: Response, next: NextFunction): 
     event = stripe.webhooks.constructEvent(
       req.body as Buffer,
       sig,
-      process.env.STRIPE_WEBHOOK_SECRET!
+      process.env.STRIPE_WEBHOOK_SECRET || ''
     )
   } catch {
     res.status(400).json({ error: 'Assinatura inválida' })
