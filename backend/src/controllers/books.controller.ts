@@ -71,8 +71,8 @@ const listBooksSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().min(1).max(50).default(20),
   sort_by: z
-    .enum(['created_at', 'title', 'author', 'rating', 'start_date', 'end_date'])
-    .default('created_at'),
+    .enum(['created_at', 'updated_at', 'title', 'author', 'rating', 'start_date', 'end_date'])
+    .default('updated_at'),
   sort_order: z.enum(['asc', 'desc']).default('desc'),
 })
 
