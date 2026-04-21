@@ -22,18 +22,18 @@ const STATUS_OPTIONS = [
 const schema = z.object({
   title: z.string().min(1, 'Título obrigatório'),
   author: z.string().min(1, 'Autor obrigatório'),
-  genre: z.string().optional(),
-  pages: z.number().positive('Número inválido').nullable().optional(),
-  format: z.enum(['fisico', 'ebook', 'audiobook']).nullable().optional(),
-  status: z.enum(['lendo', 'lido', 'abandonado', 'quero_ler']),
-  series_name: z.string().nullable().optional(),
-  series_position: z.number().positive().nullable().optional(),
-  is_trilogy: z.boolean(),
-  wishlist: z.boolean(),
-  start_date: z.string().nullable().optional(),
-  end_date: z.string().nullable().optional(),
-  rating: z.number().min(1).max(5).nullable().optional(),
-  review: z.string().nullable().optional(),
+  genre: z.string().nullish(),
+  pages: z.number().min(1, 'Número inválido').nullish(),
+  format: z.enum(['fisico', 'ebook', 'audiobook']).nullish(),
+  status: z.enum(['lendo', 'lido', 'abandonado', 'quero_ler']).optional(),
+  series_name: z.string().nullish(),
+  series_position: z.number().min(1).nullish(),
+  is_trilogy: z.boolean().optional(),
+  wishlist: z.boolean().optional(),
+  start_date: z.string().nullish(),
+  end_date: z.string().nullish(),
+  rating: z.number().min(1).max(5).nullish(),
+  review: z.string().nullish(),
 })
 
 type FormData = z.infer<typeof schema>
@@ -220,7 +220,7 @@ export default function AdicionarLivro() {
                 <div>
                   <label className="block text-sm font-medium text-[#2C1810] mb-1.5">Nº de páginas</label>
                   <input
-                    {...register('pages', { valueAsNumber: true, setValueAs: (v: string) => v === '' ? null : Number(v) })}
+                    {...register('pages', { setValueAs: (v: string) => v === '' || v === undefined ? null : Number(v) })}
                     type="number"
                     min={1}
                     placeholder="Ex: 320"
