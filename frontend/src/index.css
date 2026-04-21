@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --cream: #FAF7F2;
+  --beige: #E8DDD0;
+  --beige-dark: #C9B99A;
+  --wine: #8B3A52;
+  --wine-light: #B05070;
+  --wine-muted: #F5ECF0;
+  --text-primary: #2C1810;
+  --text-muted: #7A6358;
+}
+
+body {
+  margin: 0;
+  background-color: var(--cream);
+  color: var(--text-primary);
+  font-family: 'Lato', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100svh;
+}
