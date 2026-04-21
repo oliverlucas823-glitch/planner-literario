@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
-  BookOpen, ThumbsUp, ThumbsDown, Heart, Trash2, Quote, ChevronLeft, ChevronRight,
+  BookOpen, ThumbsUp, ThumbsDown, Heart, Trash2, Quote, ChevronLeft, ChevronRight, X,
 } from 'lucide-react'
 import { booksApi } from '@/api/books'
 import { readingDaysApi } from '@/api/reading-days'
@@ -26,6 +26,27 @@ type Status = Book['status']
 const STATUS_OPTIONS: Status[] = ['lendo', 'lido', 'quero_ler', 'abandonado']
 const STATUS_LABELS: Record<Status, string> = { lendo: 'Lendo', lido: 'Lido', quero_ler: 'Quero Ler', abandonado: 'Abandonado' }
 
+const CRITERIOS_POR_GENERO: Record<string, string[]> = {
+  'Romance': ['Plot', 'Personagens', 'Romance', 'Escrita fluida'],
+  'Ficção Científica': ['Plot', 'Worldbuilding', 'Personagens', 'Escrita fluida'],
+  'Fantasia': ['Plot', 'Worldbuilding', 'Personagens', 'Escrita fluida'],
+  'Mistério': ['Plot', 'Suspense', 'Resolução', 'Escrita fluida'],
+  'Terror': ['Atmosfera', 'Suspense', 'Personagens', 'Escrita fluida'],
+  'Thriller': ['Plot', 'Suspense', 'Ritmo', 'Escrita fluida'],
+  'Clássico': ['Plot', 'Personagens', 'Estilo literário', 'Relevância'],
+  'Biografia': ['Autenticidade', 'Narrativa', 'Profundidade', 'Escrita fluida'],
+  'Autoajuda': ['Aplicabilidade', 'Clareza', 'Exemplos práticos', 'Escrita fluida'],
+  'História': ['Precisão', 'Narrativa', 'Profundidade', 'Escrita fluida'],
+  'Poesia': ['Linguagem', 'Emoção', 'Originalidade', 'Impacto'],
+  'Conto': ['Plot', 'Personagens', 'Conclusão', 'Escrita fluida'],
+  'Distopia': ['Plot', 'Worldbuilding', 'Crítica social', 'Personagens'],
+  'Literatura Brasileira': ['Plot', 'Personagens', 'Contexto cultural', 'Escrita fluida'],
+  'Outro': ['Critério 1', 'Critério 2', 'Critério 3', 'Escrita fluida'],
+  'default': ['Plot', 'Personagens', 'Final', 'Escrita fluida'],
+}
+
+const RATING_KEYS: (keyof Book)[] = ['rating_plot', 'rating_characters', 'rating_ending', 'rating_writing']
+
 export default function BookReview() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -37,6 +58,18 @@ export default function BookReview() {
   const [deleting, setDeleting] = useState(false)
   const [showStatusMenu, setShowStatusMenu] = useState(false)
   const [showCoverUpload, setShowCoverUpload] = useState(false)
+
+  // Progress by page
+  const [currentPage, setCurrentPage] = useState(0)
+
+  // Quotes
+  const [quotes, setQuotes] = useState<string[]>([])
+  const [showAddQuote, setShowAddQuote] = useState(false)
+  const [newQuote, setNewQuote] = useState('')
+
+  // Explicit save state
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   // Calendar state
   const [calYear, setCalYear] = useState(new Date().getFullYear())
@@ -59,6 +92,16 @@ export default function BookReview() {
       .finally(() => setLoading(false))
   }, [id])
 
+  // Initialize derived state from book on first load
+  useEffect(() => {
+    if (!book) return
+    if (book.pages) {
+      setCurrentPage(Math.round((book.progress / 100) * book.pages))
+    }
+    setQuotes(book.favorite_quote ? book.favorite_quote.split('|||').filter(Boolean) : [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [book?.id])
+
   // Load calendar days for current month
   useEffect(() => {
     if (!id) return
@@ -76,18 +119,42 @@ export default function BookReview() {
   const updateField = useCallback((patch: Partial<Book>) => {
     setBook((prev) => (prev ? { ...prev, ...patch } : null))
     Object.assign(pendingPatch.current, patch)
+    setHasUnsavedChanges(true)
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(async () => {
       const toSave = { ...pendingPatch.current }
       pendingPatch.current = {}
       try {
         await booksApi.update(id!, toSave)
+        setHasUnsavedChanges(false)
         toast.success('Salvo', { duration: 1000, position: 'bottom-left' })
       } catch {
         // silent — non-blocking auto-save
       }
     }, 1500)
   }, [id])
+
+  const saveNow = async () => {
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    const toSave = { ...pendingPatch.current }
+    pendingPatch.current = {}
+    if (Object.keys(toSave).length === 0) return
+    setSaving(true)
+    try {
+      await booksApi.update(id!, toSave)
+      setHasUnsavedChanges(false)
+      toast.success('Salvo com sucesso')
+    } catch {
+      toast.error('Erro ao salvar')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const saveQuotes = useCallback((newQuotes: string[]) => {
+    const joined = newQuotes.join('|||')
+    updateField({ favorite_quote: joined || null })
+  }, [updateField])
 
   // Toggle reading day (optimistic)
   const toggleDay = async (dateStr: string) => {
@@ -200,6 +267,8 @@ export default function BookReview() {
     )
   }
 
+  const criterios = CRITERIOS_POR_GENERO[book.genre ?? ''] ?? CRITERIOS_POR_GENERO['default']
+
   return (
     <div className="min-h-full bg-[#FAF7F2]">
       <div className="px-6 pt-6 pb-2">
@@ -246,7 +315,7 @@ export default function BookReview() {
             )}
           </div>
 
-          {/* Star rating */}
+          {/* Star rating + genre-based detail ratings */}
           <div className="bg-white rounded-xl border border-[#E8DDD0] p-4 space-y-4">
             <div>
               <p className="text-xs font-semibold text-[#7A6358] uppercase tracking-wide mb-2">Avaliação</p>
@@ -260,17 +329,12 @@ export default function BookReview() {
             <div>
               <p className="text-xs font-semibold text-[#7A6358] uppercase tracking-wide mb-3">Detalhes</p>
               <div className="space-y-2.5">
-                {([
-                  ['Plot', 'rating_plot'],
-                  ['Personagens', 'rating_characters'],
-                  ['Final', 'rating_ending'],
-                  ['Escrita fluida', 'rating_writing'],
-                ] as [string, keyof Book][]).map(([label, key]) => (
-                  <div key={key} className="flex items-center justify-between gap-3">
+                {criterios.map((label, i) => (
+                  <div key={RATING_KEYS[i]} className="flex items-center justify-between gap-3">
                     <span className="text-sm text-[#7A6358] flex-shrink-0 w-28">{label}</span>
                     <HeartRating
-                      value={(book[key] as number) ?? 0}
-                      onChange={(v) => updateField({ [key]: v })}
+                      value={(book[RATING_KEYS[i]] as number) ?? 0}
+                      onChange={(v) => updateField({ [RATING_KEYS[i]]: v })}
                     />
                   </div>
                 ))}
@@ -450,10 +514,32 @@ export default function BookReview() {
             <p className="text-xs font-semibold text-[#7A6358] uppercase tracking-wide mb-3">
               Progresso de leitura
             </p>
-            <ProgressBar
-              value={book.progress}
-              onChange={(v) => updateField({ progress: v })}
-            />
+            {book.pages ? (
+              <div>
+                <label className="block text-xs text-[#7A6358] mb-1">Página atual</label>
+                <input
+                  type="number"
+                  min={0}
+                  max={book.pages}
+                  value={currentPage}
+                  onChange={(e) => {
+                    const val = Math.min(Math.max(0, Number(e.target.value)), book.pages!)
+                    setCurrentPage(val)
+                    const pct = Math.round((val / book.pages!) * 100)
+                    updateField({ progress: pct })
+                  }}
+                  className="w-full px-3 py-2 rounded-lg border border-[#C9B99A] bg-white text-[#2C1810] focus:outline-none focus:ring-2 focus:ring-[#8B3A52] text-sm"
+                />
+                <p className="text-xs text-[#7A6358] mt-2">
+                  Página {currentPage} de {book.pages} ({Math.round((currentPage / book.pages) * 100)}%)
+                </p>
+              </div>
+            ) : (
+              <ProgressBar
+                value={book.progress}
+                onChange={(v) => updateField({ progress: v })}
+              />
+            )}
           </div>
 
           {/* Review */}
@@ -475,19 +561,88 @@ export default function BookReview() {
             </div>
           </div>
 
-          {/* Favorite quote */}
+          {/* Favorite quotes */}
           <div className="bg-white rounded-xl border border-[#E8DDD0] p-6">
             <div className="flex items-center gap-2 mb-3">
               <Quote size={14} className="text-[#C9B99A]" />
-              <p className="text-xs font-semibold text-[#7A6358] uppercase tracking-wide">Citação favorita</p>
+              <p className="text-xs font-semibold text-[#7A6358] uppercase tracking-wide">Citações favoritas</p>
             </div>
-            <textarea
-              value={book.favorite_quote ?? ''}
-              onChange={(e) => updateField({ favorite_quote: e.target.value })}
-              rows={3}
-              placeholder="Sua passagem favorita do livro..."
-              className="w-full px-3 py-2.5 rounded-lg border border-[#C9B99A] bg-[#FAF7F2] text-[#2C1810] placeholder:text-[#C9B99A] focus:outline-none focus:ring-2 focus:ring-[#8B3A52] text-sm resize-none italic"
-            />
+
+            {quotes.length > 0 && (
+              <div className="space-y-2 mb-3">
+                {quotes.map((q, i) => (
+                  <div key={i} className="bg-[#FAF7F2] border border-[#8B3A52]/30 rounded-lg p-3 flex items-start gap-2">
+                    <p className="text-sm text-[#2C1810] italic flex-1">{q}</p>
+                    <button
+                      onClick={() => {
+                        const updated = quotes.filter((_, idx) => idx !== i)
+                        setQuotes(updated)
+                        saveQuotes(updated)
+                      }}
+                      className="text-[#C9B99A] hover:text-red-400 flex-shrink-0 mt-0.5"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {showAddQuote ? (
+              <div>
+                <textarea
+                  value={newQuote}
+                  onChange={(e) => setNewQuote(e.target.value)}
+                  rows={3}
+                  placeholder="Digite a citação..."
+                  className="w-full px-3 py-2.5 rounded-lg border border-[#C9B99A] bg-[#FAF7F2] text-[#2C1810] placeholder:text-[#C9B99A] focus:outline-none focus:ring-2 focus:ring-[#8B3A52] text-sm resize-none italic mb-2"
+                  autoFocus
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      if (!newQuote.trim()) return
+                      const updated = [...quotes, newQuote.trim()]
+                      setQuotes(updated)
+                      saveQuotes(updated)
+                      setNewQuote('')
+                      setShowAddQuote(false)
+                    }}
+                    className="px-3 py-1.5 rounded-lg bg-[#8B3A52] text-white text-xs font-medium hover:bg-[#7A2D42] transition-colors"
+                  >
+                    Salvar citação
+                  </button>
+                  <button
+                    onClick={() => { setShowAddQuote(false); setNewQuote('') }}
+                    className="px-3 py-1.5 rounded-lg border border-[#C9B99A] text-[#7A6358] text-xs hover:bg-[#FAF7F2] transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowAddQuote(true)}
+                className="text-sm text-[#8B3A52] hover:underline"
+              >
+                + Adicionar citação
+              </button>
+            )}
+          </div>
+
+          {/* Explicit save button */}
+          <div className="flex justify-end">
+            <button
+              onClick={saveNow}
+              disabled={!hasUnsavedChanges || saving}
+              className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                hasUnsavedChanges
+                  ? 'bg-[#8B3A52] text-white hover:bg-[#7A2D42]'
+                  : 'bg-green-50 text-green-700 border border-green-200 cursor-default'
+              }`}
+            >
+              {saving ? 'Salvando...' : hasUnsavedChanges ? 'Salvar alterações' : '✓ Salvo'}
+            </button>
           </div>
 
           {/* Actions */}

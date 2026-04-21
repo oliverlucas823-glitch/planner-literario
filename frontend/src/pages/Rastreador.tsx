@@ -159,7 +159,7 @@ export default function Rastreador() {
                   .sort((a, b) => b.read_date.localeCompare(a.read_date))
                   .slice(0, 20)
                   .map((day) => {
-                    const date = new Date(day.read_date + 'T12:00:00')
+                    const date = new Date(day.read_date.split('T')[0] + 'T12:00:00')
                     return (
                       <div key={day.id} className="flex items-center gap-3 py-2 border-b border-[#E8DDD0] last:border-0">
                         <div className="w-2 h-2 rounded-full bg-[#8B3A52] flex-shrink-0" />
