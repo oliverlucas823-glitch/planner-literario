@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Trophy, Plus } from 'lucide-react'
+import { Trophy, Plus, Grid3X3 } from 'lucide-react'
 import { challengesApi } from '@/api/challenges'
 import type { Challenge } from '@/types'
 import EmptyState from '@/components/shared/EmptyState'
@@ -94,12 +94,20 @@ export default function Desafios() {
             <h1 className="text-2xl font-bold font-display text-[#2C1810]">Meus Desafios</h1>
             <p className="text-sm text-[#7A6358] mt-0.5">Acompanhe seus desafios de leitura.</p>
           </div>
-          <button
-            onClick={openModal}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#8B3A52] text-white text-sm font-medium hover:bg-[#7A2D42] transition-colors"
-          >
-            <Plus size={16} /> Criar desafio
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/desafios/bingo"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#C9B99A] text-[#7A6358] text-sm hover:bg-[#E8DDD0] transition-colors"
+            >
+              <Grid3X3 size={16} /> Bingo Literário
+            </Link>
+            <button
+              onClick={openModal}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#8B3A52] text-white text-sm font-medium hover:bg-[#7A2D42] transition-colors"
+            >
+              <Plus size={16} /> Criar desafio
+            </button>
+          </div>
         </div>
 
         {/* Content */}

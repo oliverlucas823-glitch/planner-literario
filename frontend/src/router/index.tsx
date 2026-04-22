@@ -16,16 +16,13 @@ import AdicionarLivro from '@/pages/AdicionarLivro'
 import QueroLer from '@/pages/QueroLer'
 import Rastreador from '@/pages/Rastreador'
 import Series from '@/pages/Series'
-import Trilogias from '@/pages/Trilogias'
 import NaoTerminados from '@/pages/NaoTerminados'
 import FavoritosLivros from '@/pages/FavoritosLivros'
 import FavoritosAutores from '@/pages/FavoritosAutores'
 import FavoritosCitacoes from '@/pages/FavoritosCitacoes'
 import Desafios from '@/pages/Desafios'
 import DetalheDesafio from '@/pages/desafios/DetalheDesafio'
-import Metas from '@/pages/Metas'
 import Bingo from '@/pages/Bingo'
-import VisionBoard from '@/pages/VisionBoard'
 import Estatisticas from '@/pages/Estatisticas'
 import Assinatura from '@/pages/Assinatura'
 import Configuracoes from '@/pages/Configuracoes'
@@ -83,16 +80,13 @@ export const router = createBrowserRouter([
           { path: '/quero-ler', element: <QueroLer /> },
           { path: '/rastreador', element: <Rastreador /> },
           { path: '/series', element: <Series /> },
-          { path: '/trilogias', element: <Trilogias /> },
           { path: '/nao-terminados', element: <NaoTerminados /> },
           { path: '/favoritos/livros', element: <FavoritosLivros /> },
           { path: '/favoritos/autores', element: <FavoritosAutores /> },
           { path: '/favoritos/citacoes', element: <FavoritosCitacoes /> },
-          { path: '/metas', element: <Metas /> },
           { path: '/desafios', element: <Desafios /> },
+          { path: '/desafios/bingo', element: <Bingo /> },
           { path: '/desafios/:id', element: <DetalheDesafio /> },
-          { path: '/bingo', element: <Bingo /> },
-          { path: '/vision-board', element: <VisionBoard /> },
           { path: '/estatisticas', element: <Estatisticas /> },
           { path: '/assinatura', element: <Assinatura /> },
           { path: '/configuracoes', element: <Configuracoes /> },

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { BookOpen, Flame, Tag, BookMarked, BookPlus } from 'lucide-react'
+import { BookOpen, Flame, Tag, BookMarked, BookPlus, Target } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
@@ -14,6 +14,9 @@ import HeatmapYear from '@/components/shared/HeatmapYear'
 import ProGate from '@/components/shared/ProGate'
 import EmptyState from '@/components/shared/EmptyState'
 import { Skeleton } from '@/components/shared/Skeleton'
+
+const YEAR = new Date().getFullYear()
+const LS_KEY = `meta_anual_${YEAR}`
 
 const MONTH_ABBR = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 
@@ -87,6 +90,27 @@ export default function Dashboard() {
   const [monthData, setMonthData] = useState<MonthEntry[]>([])
   const [readingDates, setReadingDates] = useState<string[]>([])
   const [booksReadCount, setBooksReadCount] = useState(0)
+
+  // Meta anual (localStorage)
+  const [goal, setGoal] = useState<number | null>(null)
+  const [goalInput, setGoalInput] = useState('')
+  const [editingGoal, setEditingGoal] = useState(false)
+
+  useEffect(() => {
+    const stored = localStorage.getItem(LS_KEY)
+    if (stored) {
+      const n = Number(stored)
+      if (!isNaN(n) && n > 0) { setGoal(n); setGoalInput(String(n)) }
+    }
+  }, [])
+
+  const saveGoal = () => {
+    const n = Number(goalInput)
+    if (!n || n <= 0) return
+    localStorage.setItem(LS_KEY, String(n))
+    setGoal(n)
+    setEditingGoal(false)
+  }
 
   useEffect(() => {
     const year = new Date().getFullYear()
@@ -194,6 +218,78 @@ export default function Dashboard() {
           label="em andamento"
           loading={loading}
         />
+      </div>
+
+      {/* Meta anual card */}
+      <div className="bg-white border border-[#E8DDD0] rounded-2xl p-5 shadow-sm">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-[#F5ECF0] flex items-center justify-center flex-shrink-0">
+              <Target size={18} className="text-[#8B3A52]" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-[#2C1810]">Meta {YEAR}</p>
+              {loading ? (
+                <p className="text-xs text-[#C9B99A]">carregando…</p>
+              ) : goal ? (
+                <p className="text-xs text-[#7A6358]">
+                  Você leu <span className="font-bold text-[#8B3A52]">{booksReadCount}</span> de{' '}
+                  <span className="font-bold text-[#2C1810]">{goal}</span> livros em {YEAR}
+                </p>
+              ) : (
+                <p className="text-xs text-[#C9B99A]">Meta não definida</p>
+              )}
+            </div>
+          </div>
+
+          {/* Progress bar or input */}
+          {goal && !editingGoal ? (
+            <div className="flex items-center gap-3 flex-1 min-w-48">
+              <div className="flex-1 bg-[#E8DDD0] rounded-full h-2.5">
+                <div
+                  className="bg-[#8B3A52] h-2.5 rounded-full transition-all"
+                  style={{ width: `${Math.min(100, Math.round((booksReadCount / goal) * 100))}%` }}
+                />
+              </div>
+              <span className="text-xs text-[#7A6358] flex-shrink-0 w-10 text-right">
+                {Math.min(100, Math.round((booksReadCount / goal) * 100))}%
+              </span>
+              <button
+                onClick={() => setEditingGoal(true)}
+                className="text-xs text-[#8B3A52] hover:underline flex-shrink-0"
+              >
+                Editar
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={1}
+                value={goalInput}
+                onChange={(e) => setGoalInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && saveGoal()}
+                placeholder="Ex: 24"
+                autoFocus={editingGoal}
+                className="w-24 px-2.5 py-1.5 rounded-lg border border-[#C9B99A] text-sm text-[#2C1810] focus:outline-none focus:ring-2 focus:ring-[#8B3A52]"
+              />
+              <button
+                onClick={saveGoal}
+                className="px-3 py-1.5 rounded-lg bg-[#8B3A52] text-white text-xs font-medium hover:bg-[#7A2D42] transition-colors"
+              >
+                {goal ? 'Salvar' : 'Definir meta'}
+              </button>
+              {editingGoal && (
+                <button
+                  onClick={() => setEditingGoal(false)}
+                  className="px-3 py-1.5 rounded-lg border border-[#C9B99A] text-[#7A6358] text-xs hover:bg-[#FAF7F2]"
+                >
+                  Cancelar
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Chart + Heatmap */}

@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Library, BookPlus, Bookmark, Activity, Layers,
-  BookMarked, XCircle, Heart, Users, Quote, Trophy, Target, LayoutGrid,
-  Image, BarChart2, CreditCard, Settings, Lock, Menu, X, LogOut, BookOpen,
+  XCircle, Heart, Users, Quote, Trophy,
+  BarChart2, CreditCard, Settings, Lock, Menu, X, LogOut, BookOpen,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { getInitials } from '@/lib/utils'
@@ -29,8 +29,7 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
   {
     title: 'Coleções',
     items: [
-      { label: 'Séries', to: '/series', icon: Layers },
-      { label: 'Trilogias', to: '/trilogias', icon: BookMarked },
+      { label: 'Séries e Trilogias', to: '/series', icon: Layers },
       { label: 'Não Terminados', to: '/nao-terminados', icon: XCircle },
     ],
   },
@@ -46,14 +45,11 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
     title: 'Desafios',
     items: [
       { label: 'Desafios', to: '/desafios', icon: Trophy },
-      { label: 'Metas', to: '/metas', icon: Target },
-      { label: 'Bingo', to: '/bingo', icon: LayoutGrid },
     ],
   },
   {
     title: 'PRO',
     items: [
-      { label: 'Vision Board', to: '/vision-board', icon: Image, pro: true },
       { label: 'Estatísticas', to: '/estatisticas', icon: BarChart2, pro: true },
     ],
   },
