@@ -1,0 +1,15 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_middleware_1 = require("../middlewares/auth.middleware");
+const pro_middleware_1 = require("../middlewares/pro.middleware");
+const stats_controller_1 = require("../controllers/stats.controller");
+const router = (0, express_1.Router)();
+router.get('/overview', auth_middleware_1.authenticateToken, pro_middleware_1.requirePro, stats_controller_1.overview);
+router.get('/by-month', auth_middleware_1.authenticateToken, pro_middleware_1.requirePro, stats_controller_1.byMonth);
+router.get('/by-genre', auth_middleware_1.authenticateToken, pro_middleware_1.requirePro, stats_controller_1.byGenre);
+router.get('/by-format', auth_middleware_1.authenticateToken, pro_middleware_1.requirePro, stats_controller_1.byFormat);
+router.get('/pages-evolution', auth_middleware_1.authenticateToken, pro_middleware_1.requirePro, stats_controller_1.pagesEvolution);
+router.get('/ratings-by-genre', auth_middleware_1.authenticateToken, pro_middleware_1.requirePro, stats_controller_1.ratingsByGenre);
+router.get('/worst-books', auth_middleware_1.authenticateToken, pro_middleware_1.requirePro, stats_controller_1.worstBooks);
+exports.default = router;

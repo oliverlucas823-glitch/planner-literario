@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_middleware_1 = require("../middlewares/auth.middleware");
+const challenges_controller_1 = require("../controllers/challenges.controller");
+const router = (0, express_1.Router)();
+router.get('/', auth_middleware_1.authenticateToken, challenges_controller_1.list);
+router.post('/', auth_middleware_1.authenticateToken, challenges_controller_1.create);
+router.get('/:id', auth_middleware_1.authenticateToken, challenges_controller_1.getById);
+router.put('/:id', auth_middleware_1.authenticateToken, challenges_controller_1.update);
+router.delete('/:id', auth_middleware_1.authenticateToken, challenges_controller_1.remove);
+router.put('/:challengeId/items/:itemId', auth_middleware_1.authenticateToken, challenges_controller_1.assignBook);
+exports.default = router;
