@@ -22,6 +22,7 @@ import FavoritosLivros from '@/pages/FavoritosLivros'
 import FavoritosAutores from '@/pages/FavoritosAutores'
 import FavoritosCitacoes from '@/pages/FavoritosCitacoes'
 import Desafios from '@/pages/Desafios'
+import DetalheDesafio from '@/pages/desafios/DetalheDesafio'
 import Bingo from '@/pages/Bingo'
 import VisionBoard from '@/pages/VisionBoard'
 import Estatisticas from '@/pages/Estatisticas'
@@ -87,6 +88,7 @@ export const router = createBrowserRouter([
           { path: '/favoritos/autores', element: <FavoritosAutores /> },
           { path: '/favoritos/citacoes', element: <FavoritosCitacoes /> },
           { path: '/desafios', element: <Desafios /> },
+          { path: '/desafios/:id', element: <DetalheDesafio /> },
           { path: '/bingo', element: <Bingo /> },
           { path: '/vision-board', element: <VisionBoard /> },
           { path: '/estatisticas', element: <Estatisticas /> },
